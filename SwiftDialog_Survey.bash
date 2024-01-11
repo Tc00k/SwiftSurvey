@@ -241,6 +241,8 @@ if [ $participate == 'Yes' ]; then
             echo ""
             echo "-- Removing all temporary files and cleaning up..."
             rm -rf $surveyresults
+            ## Recon to report results to JAMF
+            /usr/local/jamf/bin/jamf recon
             ;;
         esac
 
