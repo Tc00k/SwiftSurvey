@@ -45,6 +45,7 @@ Make sure you have the following:
 6. Set a minimum score for the Rating out of 5 section under line 25
 7. Make the required changes to the dialog text in the SwiftDialog_Survey.bash script on your Jamf instance ( The configuration & variable sections for "Alert" "Page 1" and "Page 2" have all the current text for the dialog window )
 8. Create a smart group that is scoped to any machines that have the "sad" result in the extension attribute mentioned above. This way if a computer has the minimum score flag they enter this smart group for tracking of users that were exceptionally dissatisfied
+![Screenshot 2024-01-11 at 2 41 15 PM](https://github.com/Tc00k/SwiftSurvey/assets/150291395/c84bfda5-ccbd-4b3b-9eaa-0f6df9cdb96e)
 
 ### Usage
 
