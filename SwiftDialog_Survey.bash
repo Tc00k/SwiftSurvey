@@ -22,9 +22,11 @@ echo " "
 echo "-- Grabbing Dialog binary..."
 echo "-- Creating Survey Result file..."
 echo ""
-dialogBinary="/usr/local/bin/dialog"
-surveyresults="/private/var/surveyresults.txt"
+alertScoreMinimum="5"
+sadface="/private/var/sadface.txt"
 tempSurveyResults="/private/var/tempsurveyresults.txt"
+surveyresults="/private/var/surveyresults.txt"
+dialogBinary="/usr/local/bin/dialog"
 brandingBanner="https://img.freepik.com/free-photo/abstract-smooth-dark-blue-with-black-vignette-studio-well-use-as-backgroundbusiness-reportdigitalwebsite-templatebackdrop_1258-108839.jpg"
 
 ##########################################
@@ -56,6 +58,15 @@ alertConfig="$dialogBinary \
 --position \"topright\" \
 --ontop \
 "
+
+##########################################
+## Pre Run Check
+##########################################
+
+## Remove previous smart group flag if present
+if [ -f $sadface ]; then
+    rm -rf $sadface
+fi
 
 ##########################################
 ## Display Alert
@@ -167,8 +178,7 @@ if [ $participate == 'Yes' ]; then
     echo ""
     echo "-- Running Dialog for page 1..."
     echo "-- Waiting for input..."
-    echo "" >> "${surveyresults}"
-    ## Launches the first page dialog and copies the returns from the survey fields to a temporary file
+    ## Launches the first page dialog and copies the returns from the survey fields to a temporary file for cleanup
     eval "${page1Config}" >> "${tempSurveyResults}" 2>&1
 
     ## Run commands based off button returns (Page 1)
@@ -205,23 +215,32 @@ if [ $participate == 'Yes' ]; then
             0)
             echo "-- User Pressed $page2button1text --"
             echo ""
-                ## Adjust the lines in temp file for better readability
+            ##########################################
+            ## Gather Results
+            ##########################################
+            
+            ## Remove useless returns
             egrep -v 'Selected|index' "${tempSurveyResults}" >> "${surveyresults}"
-                ## Paste the returned fields to a policy log in JAMF (SurveyLimpet)
-            /usr/local/bin/jamf policy -event retrievesurvey
+            ## Remove temp file
+            rm -rf $tempSurveyResults
+            ## Assign all returns to a variable to keep the log looking clean regardless of "Additional Feedback" size (Also sometimes SwiftDialog displays the returns out of order, this fixes that )
+            lineone=$( grep "Full Name" "$surveyresults" )
+            linetwo=$( grep "Additional Feedback" "$surveyresults" )
+            linethree=$( grep "Rate us out of 5" "$surveyresults" )
+            rating=$( grep "Rate us out of 5" "$surveyresults" | awk -F'"' '{print $4}' )
+            ## Echo all returns in order
+            echo $lineone
+            echo $linetwo
+            echo $linethree
+            ## Check to see if the rating is below the minimum score set above
+            if [ "$rating" -lt "$alertScoreMinimum" ]; then
+                echo "-- Rating below minimum depositing flag..."
+                touch $sadface
+            fi
             ## Remove the temporary file
             echo ""
             echo "-- Removing all temporary files and cleaning up..."
             rm -rf $surveyresults
-            rm -rf $tempSurveyResults
-            ;;
-            ## Button 2 Return
-            2)
-            echo "-- User Pressed $page2button2text --"
-            ;;
-            ## InfoButton Return
-            3)
-            echo "-- User Pressed $page2infotext --"
             ;;
         esac
 
